@@ -1,8 +1,10 @@
 <?php
-$host = getenv('DB_HOST') ?: '127.0.0.1';
-$database = getenv('DB_NAME') ?: 'devhire';
-$username = getenv('DB_USER') ?: 'root';
-$password = getenv('DB_PASS') ?: '';
+$config = app_config();
+
+$host = $config['database']['host'] ?? '127.0.0.1';
+$database = $config['database']['name'] ?? 'devhire';
+$username = $config['database']['user'] ?? 'root';
+$password = $config['database']['pass'] ?? '';
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host={$host};dbname={$database};charset={$charset}";

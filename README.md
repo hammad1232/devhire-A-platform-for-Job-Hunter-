@@ -22,8 +22,8 @@ DevHire is a PHP and MySQL developer hiring marketplace where clients post jobs 
 
 1. Create a MySQL database named `devhire`.
 2. Import `database/devhire.sql`.
-3. Update environment variables or edit `includes/db.php` for your database connection.
-4. Optionally set `APP_BASE_PATH`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_MODEL_FALLBACKS`, and `GEMINI_BASE_URL` in your hosting environment.
+3. Edit `config.php` with your database connection and API credentials.
+4. Keep `config.php` outside public sharing and fill in your live values before deployment.
 5. Ensure the web root points to the project folder or set `APP_BASE_PATH` correctly if deployed in a subfolder.
 6. Optional: run `database/admin_privileges.sql` to create a dedicated DB login with CRUD access.
 
@@ -32,8 +32,8 @@ DevHire is a PHP and MySQL developer hiring marketplace where clients post jobs 
 - GitHub works for source control and collaboration.
 - Netlify can only preview static frontend output. It cannot run PHP.
 - Use PHP hosting such as 000webhost, InfinityFree, or cPanel for the full application.
-- Keep `/uploads` and `.env` out of version control.
+- Keep `/uploads` and `config.php` private if it contains live secrets.
 
 ## AI Configuration
 
-The AI pages use Gemini via PHP cURL. The app defaults to `gemma-3-1b-it` and can fall back to other free Gemma models if needed. If no API key is configured, the pages fall back to safe template-based output so the app still works.
+The AI pages use Gemini via PHP cURL. The app defaults to `gemma-3-1b-it` and can fall back to other free Gemma models if needed. If no API key is configured in `config.php`, the pages fall back to safe template-based output so the app still works.

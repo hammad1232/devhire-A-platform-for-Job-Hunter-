@@ -40,13 +40,11 @@ function oauth_request(string $url, string $method = 'GET', array $headers = [],
 
 function oauth_provider_config(string $provider): array
 {
-    $callbackUrl = app_url('auth/social_auth.php?provider=' . $provider . '&action=callback');
-
     if ($provider === 'google') {
         return [
-            'client_id' => env_value('GOOGLE_CLIENT_ID'),
-            'client_secret' => env_value('GOOGLE_CLIENT_SECRET'),
-            'redirect_uri' => env_value('GOOGLE_REDIRECT_URI', $callbackUrl),
+            'client_id' => config_value('services.oauth.google.client_id'),
+            'client_secret' => config_value('services.oauth.google.client_secret'),
+            'redirect_uri' => config_value('services.oauth.google.redirect_uri', app_url('auth/social_auth.php?provider=google&action=callback')),
             'authorize_url' => 'https://accounts.google.com/o/oauth2/v2/auth',
             'token_url' => 'https://oauth2.googleapis.com/token',
             'scope' => 'openid email profile',
@@ -54,9 +52,9 @@ function oauth_provider_config(string $provider): array
     }
 
     return [
-        'client_id' => env_value('GITHUB_CLIENT_ID'),
-        'client_secret' => env_value('GITHUB_CLIENT_SECRET'),
-        'redirect_uri' => env_value('GITHUB_REDIRECT_URI', $callbackUrl),
+        'client_id' => config_value('services.oauth.github.client_id'),
+        'client_secret' => config_value('services.oauth.github.client_secret'),
+        'redirect_uri' => config_value('services.oauth.github.redirect_uri', app_url('auth/social_auth.php?provider=github&action=callback')),
         'authorize_url' => 'https://github.com/login/oauth/authorize',
         'token_url' => 'https://github.com/login/oauth/access_token',
         'scope' => 'read:user user:email',
@@ -201,7 +199,7 @@ $desiredRole = in_array($_SESSION['oauth_desired_role'][$provider] ?? '', ['clie
 
 if ($action === 'start' || empty($_GET['code'])) {
     if (empty($config['client_id']) || empty($config['client_secret'])) {
-        oauth_flash_and_redirect('danger', ucfirst($provider) . ' OAuth is not configured yet. Add the client ID and secret in your .env file.', app_url('auth/register.php'));
+        oauth_flash_and_redirect('danger', ucfirst($provider) . ' OAuth is not configured yet. Add the client ID and secret in config.php.', app_url('auth/register.php'));
     }
 
     $state = bin2hex(random_bytes(16));
@@ -250,7 +248,7 @@ if ($code === '') {
 }
 
 if (empty($config['client_id']) || empty($config['client_secret'])) {
-    oauth_flash_and_redirect('danger', ucfirst($provider) . ' OAuth is not configured yet. Add the client ID and secret in your .env file.', app_url('auth/register.php'));
+    oauth_flash_and_redirect('danger', ucfirst($provider) . ' OAuth is not configured yet. Add the client ID and secret in config.php.', app_url('auth/register.php'));
 }
 
 if ($provider === 'google') {

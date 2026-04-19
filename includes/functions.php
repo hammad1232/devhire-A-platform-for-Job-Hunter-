@@ -3,37 +3,32 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-function load_env_file(string $filePath): void
+function app_config(?string $key = null, mixed $default = null): mixed
 {
-    if (!is_file($filePath)) {
-        return;
+    static $config = null;
+
+    if ($config === null) {
+        $loadedConfig = require __DIR__ . '/../config.php';
+        $config = is_array($loadedConfig) ? $loadedConfig : [];
     }
 
-    $lines = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    if ($lines === false) {
-        return;
+    if ($key === null || $key === '') {
+        return $config;
     }
 
-    foreach ($lines as $line) {
-        $trimmedLine = trim($line);
-        if ($trimmedLine === '' || str_starts_with($trimmedLine, '#') || !str_contains($trimmedLine, '=')) {
-            continue;
+    $segments = explode('.', $key);
+    $value = $config;
+
+    foreach ($segments as $segment) {
+        if (!is_array($value) || !array_key_exists($segment, $value)) {
+            return $default;
         }
 
-        [$name, $value] = array_map('trim', explode('=', $trimmedLine, 2));
-        if ($name === '' || getenv($name) !== false) {
-            continue;
-        }
-
-        $value = trim($value, "\"'");
-        putenv($name . '=' . $value);
-        $_ENV[$name] = $value;
-        $_SERVER[$name] = $value;
+        $value = $value[$segment];
     }
+
+    return $value;
 }
-
-load_env_file(__DIR__ . '/../.env');
-load_env_file(__DIR__ . '/../.env.example');
 
 function e(string $value): string
 {
@@ -48,7 +43,7 @@ function redirect(string $path): never
 
 function app_base_path(): string
 {
-    $basePath = getenv('APP_BASE_PATH');
+    $basePath = app_config('app.base_path', '/webproject2');
     if ($basePath === false || $basePath === '') {
         $basePath = '/webproject2';
     }
@@ -156,30 +151,30 @@ function skill_match_score(array $a, array $b): float
     return round(($overlap * 70) + (($similarity / 100) * 30), 2);
 }
 
-function env_value(string $key, string $default = ''): string
+function config_value(string $key, string $default = ''): string
 {
-    $value = getenv($key);
+    $value = app_config($key, $default);
 
-    if ($value === false || $value === '') {
+    if ($value === false || $value === '' || $value === null) {
         return $default;
     }
 
-    return $value;
+    return (string) $value;
 }
 
 function gemini_chat_completion(string $systemPrompt, string $userPrompt, int $maxTokens = 500, ?string &$errorMessage = null): string
 {
     $errorMessage = null;
-    $apiKey = env_value('GEMINI_API_KEY');
+    $apiKey = config_value('services.gemini.api_key');
     if (!$apiKey || !function_exists('curl_init')) {
-        $errorMessage = !$apiKey ? 'Gemini API key is missing.' : 'PHP cURL extension is not available.';
+        $errorMessage = !$apiKey ? 'Gemini API key is missing in config.php.' : 'PHP cURL extension is not available.';
         return '';
     }
 
-    $primaryModel = env_value('GEMINI_MODEL', 'gemma-3-1b-it');
-    $fallbackModels = array_values(array_filter(array_map('trim', explode(',', env_value('GEMINI_MODEL_FALLBACKS', 'gemma-3-4b-it')))));
+    $primaryModel = config_value('services.gemini.model', 'gemma-3-1b-it');
+    $fallbackModels = array_values(array_filter(array_map('trim', explode(',', config_value('services.gemini.fallback_models', 'gemma-3-4b-it')))));
     $modelsToTry = array_values(array_unique(array_merge([$primaryModel], $fallbackModels)));
-    $baseUrl = rtrim(env_value('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com/v1beta'), '/');
+    $baseUrl = rtrim(config_value('services.gemini.base_url', 'https://generativelanguage.googleapis.com/v1beta'), '/');
     $lastError = 'Gemini response did not include generated content.';
 
     foreach ($modelsToTry as $model) {
