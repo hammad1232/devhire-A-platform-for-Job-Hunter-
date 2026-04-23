@@ -66,7 +66,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <div class="border-bottom pb-2 mb-2">
                         <div class="fw-semibold"><?php echo e($proposal['title']); ?></div>
                         <div class="small text-muted">From <?php echo e($proposal['developer_name']); ?></div>
-                        <div class="small"><?php echo e(mb_strimwidth($proposal['proposal_text'], 0, 90, '...')); ?></div>
+                        <div class="small"><?php echo e(safe_trim_excerpt((string) $proposal['proposal_text'], 90)); ?></div>
                     </div>
                 <?php endforeach; ?>
                 <?php if (!$recentProposals): ?>

@@ -75,7 +75,7 @@ require_once __DIR__ . '/../includes/header.php';
                                     <strong><?php echo e($job['title']); ?></strong>
                                     <span class="badge bg-success"><?php echo number_format((float) $job['match_score'], 0); ?>%</span>
                                 </div>
-                                <p class="small text-muted"><?php echo e(mb_strimwidth($job['description'], 0, 95, '...')); ?></p>
+                                <p class="small text-muted"><?php echo e(safe_trim_excerpt((string) $job['description'], 95)); ?></p>
                                 <div class="d-flex justify-content-between align-items-center">
                                     <span class="fw-semibold text-primary">$<?php echo number_format((float) $job['budget'], 2); ?></span>
                                     <a class="btn btn-sm btn-outline-primary" href="<?php echo app_url('developer/apply_job.php?id=' . (int) $job['id']); ?>">Apply</a>

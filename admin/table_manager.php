@@ -268,7 +268,7 @@ require_once __DIR__ . '/../includes/header.php';
                                     <tr>
                                         <?php foreach ($columns as $column): ?>
                                             <?php $colName = $column['COLUMN_NAME']; ?>
-                                            <td><?php echo e(mb_strimwidth((string) ($row[$colName] ?? ''), 0, 80, '...')); ?></td>
+                                            <td><?php echo e(safe_trim_excerpt((string) ($row[$colName] ?? ''), 80)); ?></td>
                                         <?php endforeach; ?>
                                         <td>
                                             <div class="d-flex gap-2 flex-wrap">

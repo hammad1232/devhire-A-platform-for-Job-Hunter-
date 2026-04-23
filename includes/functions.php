@@ -43,9 +43,9 @@ function redirect(string $path): never
 
 function app_base_path(): string
 {
-    $basePath = app_config('app.base_path', '/webproject2');
+    $basePath = app_config('app.base_path', '/');
     if ($basePath === false || $basePath === '') {
-        $basePath = '/webproject2';
+        $basePath = '/';
     }
 
     return '/' . trim($basePath, '/');
@@ -66,6 +66,50 @@ function app_url(string $path = ''): string
 function is_post(): bool
 {
     return $_SERVER['REQUEST_METHOD'] === 'POST';
+}
+
+function is_strong_password(string $password): bool
+{
+    if (strlen($password) < 8) {
+        return false;
+    }
+
+    $hasUppercase = preg_match('/[A-Z]/', $password) === 1;
+    $hasLowercase = preg_match('/[a-z]/', $password) === 1;
+    $hasNumber = preg_match('/[0-9]/', $password) === 1;
+    $hasSpecial = preg_match('/[^a-zA-Z0-9]/', $password) === 1;
+
+    return $hasUppercase && $hasLowercase && $hasNumber && $hasSpecial;
+}
+
+function validate_portfolio_links(string $links): array
+{
+    $trimmed = trim($links);
+    if ($trimmed === '') {
+        return [];
+    }
+
+    $rawLinks = preg_split('/[\r\n,]+/', $trimmed) ?: [];
+    $validLinks = [];
+
+    foreach ($rawLinks as $rawLink) {
+        $link = trim($rawLink);
+        if ($link === '') {
+            continue;
+        }
+
+        $validatedUrl = filter_var($link, FILTER_VALIDATE_URL);
+        $parts = $validatedUrl ? parse_url($validatedUrl) : false;
+        $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+
+        if ($validatedUrl === false || !in_array($scheme, ['http', 'https'], true) || empty($parts['host'])) {
+            throw new RuntimeException('Please enter valid portfolio links using http:// or https:// (GitHub, LinkedIn, or portfolio site).');
+        }
+
+        $validLinks[] = $validatedUrl;
+    }
+
+    return array_values(array_unique($validLinks));
 }
 
 function set_flash(string $type, string $message): void
@@ -103,6 +147,24 @@ function normalize_skills(string $skills): array
 {
     $items = array_filter(array_map('trim', explode(',', strtolower($skills))));
     return array_values(array_unique($items));
+}
+
+function safe_trim_excerpt(string $text, int $width, string $trimMarker = '...'): string
+{
+    if ($width <= 0) {
+        return '';
+    }
+
+    if (function_exists('mb_strimwidth')) {
+        return mb_strimwidth($text, 0, $width, $trimMarker, 'UTF-8');
+    }
+
+    if (strlen($text) <= $width) {
+        return $text;
+    }
+
+    $trimLength = max(0, $width - strlen($trimMarker));
+    return substr($text, 0, $trimLength) . $trimMarker;
 }
 
 function readable_level(int $points): string

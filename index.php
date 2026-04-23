@@ -86,7 +86,7 @@ require_once __DIR__ . '/includes/header.php';
                 <div class="card h-100">
                     <div class="card-body">
                         <h3 class="h5"><?php echo e($job['title']); ?></h3>
-                        <p class="text-muted small"><?php echo e(mb_strimwidth($job['description'], 0, 110, '...')); ?></p>
+                        <p class="text-muted small"><?php echo e(safe_trim_excerpt((string) $job['description'], 110)); ?></p>
                         <div class="d-flex justify-content-between align-items-center">
                             <span class="fw-semibold text-primary">$<?php echo number_format((float) $job['budget'], 2); ?></span>
                             <a href="<?php echo app_url('jobs/job_details.php?id=' . (int) $job['id']); ?>" class="btn btn-sm btn-outline-primary">Details</a>

@@ -68,7 +68,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 <h3 class="h5 mb-0"><?php echo e($job['title']); ?></h3>
                                 <span class="badge bg-success"><?php echo number_format((float) $job['match_score'], 0); ?>% match</span>
                             </div>
-                            <p class="small text-muted"><?php echo e(mb_strimwidth($job['description'], 0, 120, '...')); ?></p>
+                            <p class="small text-muted"><?php echo e(safe_trim_excerpt((string) $job['description'], 120)); ?></p>
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="fw-semibold text-primary">$<?php echo number_format((float) $job['budget'], 2); ?></span>
                                 <a class="btn btn-outline-primary btn-sm" href="<?php echo app_url('jobs/job_details.php?id=' . (int) $job['id']); ?>">Open</a>
@@ -92,7 +92,7 @@ require_once __DIR__ . '/../includes/header.php';
                             <span class="badge bg-success"><?php echo number_format((float) $job['match_score'], 0); ?>% match</span>
                         <?php endif; ?>
                     </div>
-                    <p class="small text-muted"><?php echo e(mb_strimwidth($job['description'], 0, 130, '...')); ?></p>
+                    <p class="small text-muted"><?php echo e(safe_trim_excerpt((string) $job['description'], 130)); ?></p>
                     <div class="d-flex justify-content-between align-items-center">
                         <span class="fw-semibold text-primary">$<?php echo number_format((float) $job['budget'], 2); ?></span>
                         <a class="btn btn-outline-primary btn-sm" href="<?php echo app_url('jobs/job_details.php?id=' . (int) $job['id']); ?>">Details</a>

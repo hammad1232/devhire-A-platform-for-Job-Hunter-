@@ -119,7 +119,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <div class="border-bottom pb-2 mb-2">
                             <div class="fw-semibold"><?php echo e($proposal['developer_name']); ?></div>
                             <div class="small text-muted"><?php echo e($proposal['status']); ?></div>
-                            <p class="small mb-2"><?php echo e(mb_strimwidth($proposal['proposal_text'], 0, 110, '...')); ?></p>
+                            <p class="small mb-2"><?php echo e(safe_trim_excerpt((string) $proposal['proposal_text'], 110)); ?></p>
                             <form method="post" class="d-flex gap-2 flex-wrap">
                                 <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
                                 <input type="hidden" name="action" value="hire">

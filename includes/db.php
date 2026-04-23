@@ -1,10 +1,10 @@
 <?php
 $config = app_config();
 
-$host = $config['database']['host'] ?? '127.0.0.1';
-$database = $config['database']['name'] ?? 'devhire';
-$username = $config['database']['user'] ?? 'root';
-$password = $config['database']['pass'] ?? '';
+$host = $config['database']['host'] ?? 'sql111.infinityfree.com';
+$database = $config['database']['name'] ?? 'if0_41699671_app_devhire';
+$username = $config['database']['user'] ?? 'if0_41699671';
+$password = $config['database']['pass'] ?? '2IZyGR6tNp3fyB';
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host={$host};dbname={$database};charset={$charset}";

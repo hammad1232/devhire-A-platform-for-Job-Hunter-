@@ -14,16 +14,21 @@ if (is_post()) {
     }
 
     $name = trim($_POST['name'] ?? '');
-    $email = trim($_POST['email'] ?? '');
+    $email = strtolower(trim($_POST['email'] ?? ''));
     $password = $_POST['password'] ?? '';
     $role = $_POST['role'] ?? 'client';
     $skills = trim($_POST['skills'] ?? '');
-    $experience = (int) ($_POST['experience'] ?? 0);
+    $experience = max(0, (int) ($_POST['experience'] ?? 0));
     $bio = trim($_POST['bio'] ?? '');
     $portfolioLinks = trim($_POST['portfolio_links'] ?? '');
 
     if ($name === '' || $email === '' || $password === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         set_flash('danger', 'Please fill in all required fields with valid values.');
+        redirect(app_url('auth/register.php'));
+    }
+
+    if (!is_strong_password($password)) {
+        set_flash('danger', 'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.');
         redirect(app_url('auth/register.php'));
     }
 
@@ -34,6 +39,14 @@ if (is_post()) {
 
     if ($role === 'developer' && ($skills === '' || $bio === '')) {
         set_flash('danger', 'Developer accounts require skills and bio.');
+        redirect(app_url('auth/register.php'));
+    }
+
+    try {
+        $validatedPortfolioLinks = validate_portfolio_links($portfolioLinks);
+        $portfolioLinks = implode(', ', $validatedPortfolioLinks);
+    } catch (RuntimeException $exception) {
+        set_flash('danger', $exception->getMessage());
         redirect(app_url('auth/register.php'));
     }
 
@@ -97,7 +110,7 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="card-body p-4">
                 <h1 class="h3 section-title mb-2">Create your DevHire account</h1>
                 <p class="text-muted mb-4">Choose the role that fits your marketplace journey.</p>
-                <form method="post" enctype="multipart/form-data" novalidate>
+                <form id="registerForm" method="post" enctype="multipart/form-data" novalidate>
                     <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -106,11 +119,14 @@ require_once __DIR__ . '/../includes/header.php';
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Email</label>
-                            <input type="email" name="email" class="form-control" required>
+                            <input id="emailField" type="email" name="email" class="form-control" required>
+                            <div class="invalid-feedback">Please enter a valid email address.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Password</label>
-                            <input type="password" name="password" class="form-control" required>
+                            <input id="passwordField" type="password" name="password" class="form-control" required minlength="8" pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}">
+                            <div class="form-text">Use 8+ characters with uppercase, lowercase, number, and special character.</div>
+                            <div class="invalid-feedback">Password must include uppercase, lowercase, number, and special character.</div>
                         </div>
                     </div>
 
@@ -144,7 +160,9 @@ require_once __DIR__ . '/../includes/header.php';
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Portfolio Links</label>
-                                <textarea name="portfolio_links" class="form-control" rows="3" placeholder="https://github.com/username, https://portfolio.example"></textarea>
+                                <textarea id="portfolioLinksField" name="portfolio_links" class="form-control" rows="3" placeholder="https://github.com/username, https://linkedin.com/in/username, https://portfolio.example"></textarea>
+                                <div class="form-text">Separate multiple links with commas or new lines.</div>
+                                <div class="invalid-feedback">Enter valid http/https links only (GitHub, LinkedIn, or portfolio site).</div>
                             </div>
                         </div>
                     </div>
@@ -173,12 +191,63 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const registerForm = document.getElementById('registerForm');
     const roleSelect = document.getElementById('roleSelect');
     const developerFields = document.getElementById('developerFields');
+    const emailField = document.getElementById('emailField');
+    const passwordField = document.getElementById('passwordField');
+    const portfolioLinksField = document.getElementById('portfolioLinksField');
+    const skillsField = document.querySelector('input[name="skills"]');
+    const bioField = document.querySelector('textarea[name="bio"]');
     const socialLinks = document.querySelectorAll('.social-auth-link');
 
+    function parseLinks(value) {
+        return value
+            .split(/[\n,]+/)
+            .map(function (item) { return item.trim(); })
+            .filter(function (item) { return item.length > 0; });
+    }
+
+    function isValidHttpUrl(value) {
+        try {
+            const url = new URL(value);
+            return url.protocol === 'http:' || url.protocol === 'https:';
+        } catch (error) {
+            return false;
+        }
+    }
+
+    function validatePasswordStrength() {
+        const strongPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+        if (!strongPattern.test(passwordField.value)) {
+            passwordField.setCustomValidity('Password is not strong enough.');
+            return false;
+        }
+
+        passwordField.setCustomValidity('');
+        return true;
+    }
+
+    function validatePortfolioLinks() {
+        const links = parseLinks(portfolioLinksField.value);
+        const invalidLinkExists = links.some(function (link) {
+            return !isValidHttpUrl(link);
+        });
+
+        if (invalidLinkExists) {
+            portfolioLinksField.setCustomValidity('Invalid portfolio links.');
+            return false;
+        }
+
+        portfolioLinksField.setCustomValidity('');
+        return true;
+    }
+
     function toggleDeveloperFields() {
-        developerFields.classList.toggle('d-none', roleSelect.value !== 'developer');
+        const isDeveloper = roleSelect.value === 'developer';
+        developerFields.classList.toggle('d-none', !isDeveloper);
+        skillsField.required = isDeveloper;
+        bioField.required = isDeveloper;
     }
 
     function updateSocialLinks() {
@@ -192,6 +261,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
     roleSelect.addEventListener('change', toggleDeveloperFields);
     roleSelect.addEventListener('change', updateSocialLinks);
+    passwordField.addEventListener('input', validatePasswordStrength);
+    portfolioLinksField.addEventListener('input', validatePortfolioLinks);
+
+    registerForm.addEventListener('submit', function (event) {
+        emailField.value = emailField.value.trim().toLowerCase();
+
+        const isEmailValid = emailField.checkValidity();
+        const isPasswordValid = validatePasswordStrength();
+        const areLinksValid = validatePortfolioLinks();
+        const isFormValid = isEmailValid && isPasswordValid && areLinksValid && registerForm.checkValidity();
+
+        registerForm.classList.add('was-validated');
+        if (!isFormValid) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    });
+
     toggleDeveloperFields();
     updateSocialLinks();
 });
